@@ -28,3 +28,14 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/planner", plannerRoutes);
+app.use("/api/progress", progressRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/notifications", notificationRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
+
+export default app;
