@@ -280,3 +280,325 @@ export default function DashboardPage() {
           setStatus((current) => ({ ...current, note: "" }));
         }, 2500);
       } catch (error) {
+        setStatus((current) => ({ ...current, error: error.message }));
+      }
+    }
+  }
+
+  function handleFocus(task) {
+    window.location.href = `/focus?taskId=${task._id}`;
+  }
+
+  function handleRescheduleOpen(task) {
+    setRescheduleTask(task);
+    const taskDate = new Date(task.plannedDate);
+    const year = taskDate.getFullYear();
+    const month = String(taskDate.getMonth() + 1).padStart(2, "0");
+    const day = String(taskDate.getDate()).padStart(2, "0");
+    setRescheduleDate(`${year}-${month}-${day}`);
+    setShowRescheduleModal(true);
+  }
+
+  function handleRescheduleSubmit() {
+    if (!rescheduleTask || !rescheduleDate) return;
+    try {
+      moveTask(rescheduleTask._id, new Date(rescheduleDate));
+      loadData();
+      setShowRescheduleModal(false);
+      setRescheduleTask(null);
+      setStatus((current) => ({ ...current, note: `Task moved to ${rescheduleDate}` }));
+      window.setTimeout(() => {
+        setStatus((current) => ({ ...current, note: "" }));
+      }, 2500);
+    } catch (error) {
+      setStatus((current) => ({ ...current, error: error.message }));
+    }
+  }
+
+  const hasSubjects = subjects.length > 0;
+  const hasPlan = tasks.length > 0;
+  const showGettingStarted = !hasSubjects || !hasPlan;
+
+  const plannedHours = todaySummary.plannedMinutes ? todaySummary.plannedMinutes / 60 : 0;
+  const plannedHoursRounded = Math.round(plannedHours * 10) / 10;
+  const plannedHoursLabel = plannedHoursRounded === 1 ? "1 hour" : `${plannedHoursRounded} hours`;
+  const doneForToday = todaySummary.totalCount > 0 && todaySummary.pendingCount === 0;
+
+  return (
+    <>
+      {showCheckInModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="panel m-4 max-w-md space-y-5 p-6">
+            <h2 className="font-display text-2xl font-semibold">How are you feeling today?</h2>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => handleCheckIn("good")}
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-4 text-left font-medium hover:border-sunrise hover:bg-sunrise/5 dark:border-slate-700 dark:hover:bg-sunrise/10"
+              >
+                Good 🙂
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCheckIn("okay")}
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-4 text-left font-medium hover:border-sunrise hover:bg-sunrise/5 dark:border-slate-700 dark:hover:bg-sunrise/10"
+              >
+                Okay 😐
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCheckIn("tired")}
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-4 text-left font-medium hover:border-sunrise hover:bg-sunrise/5 dark:border-slate-700 dark:hover:bg-sunrise/10"
+              >
+                Tired 😴
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReflectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="panel m-4 max-w-md space-y-5 p-6">
+            <h2 className="font-display text-2xl font-semibold">How was your study today?</h2>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => handleReflection("easy")}
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-4 text-left font-medium hover:border-sunrise hover:bg-sunrise/5 dark:border-slate-700 dark:hover:bg-sunrise/10"
+              >
+                Easy
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReflection("okay")}
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-4 text-left font-medium hover:border-sunrise hover:bg-sunrise/5 dark:border-slate-700 dark:hover:bg-sunrise/10"
+              >
+                Okay
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReflection("hard")}
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-4 text-left font-medium hover:border-sunrise hover:bg-sunrise/5 dark:border-slate-700 dark:hover:bg-sunrise/10"
+              >
+                Hard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRescheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="panel m-4 max-w-md space-y-5 p-6">
+            <h2 className="font-display text-2xl font-semibold">Reschedule task</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">{rescheduleTask?.title}</p>
+            <div className="space-y-3">
+              <label className="block">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">New date</p>
+                <input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 dark:border-slate-700 dark:bg-slate-800"
+                />
+              </label>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRescheduleModal(false)}
+                  className="flex-1 rounded-2xl border-2 border-slate-300 px-4 py-2 font-medium hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRescheduleSubmit}
+                  className="flex-1 rounded-2xl bg-sunrise px-4 py-2 font-medium text-white hover:bg-sunrise/90"
+                >
+                  Reschedule
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DashboardShell
+        title="Dashboard"
+        subtitle="Here's your plan for today."
+      >
+        <section className="grid gap-4 md:grid-cols-5">
+          <div className="panel p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Streak</p>
+            <p className="mt-2 font-display text-3xl font-semibold">{gamification.streak.current}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">days 🔥</p>
+          </div>
+          <div className="panel p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Level</p>
+            <p className="mt-2 font-display text-3xl font-semibold">{gamification.level}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{gamification.xp} XP</p>
+          </div>
+          <div className="panel p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Consistency</p>
+            <p className="mt-2 font-display text-3xl font-semibold">{gamification.consistency}%</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">this week</p>
+          </div>
+          <div className="panel p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Badges</p>
+            <p className="mt-2 text-lg">{gamification.badges.length > 0 ? gamification.badges[gamification.badges.length - 1] : "—"}</p>
+          </div>
+          <div className="panel p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Check-in</p>
+            <p className="mt-2 text-2xl">{todayCheckIn?.feeling === "good" ? "🙂" : todayCheckIn?.feeling === "tired" ? "😴" : "😐"}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Done</p>
+          </div>
+        </section>
+
+        <section className="panel p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-display text-2xl font-semibold">Today’s plan</h2>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Start small. Stay consistent.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button type="button" className="btn-primary" onClick={() => scrollToRef(pomodoroRef)}>
+              Start focus session
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => scrollToRef(scheduleRef)}>
+              View full schedule
+            </button>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <div className="panel-muted p-4">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Total study time</p>
+            <p className="mt-2 font-display text-3xl font-semibold">{plannedHoursLabel}</p>
+          </div>
+          <div className="panel-muted p-4">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Subjects</p>
+            <p className="mt-2 font-display text-3xl font-semibold">{todaySummary.subjectsCount || subjects.length}</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">You’re doing great 👍</p>
+      </section>
+
+      <section className="panel p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-display text-2xl font-semibold">Quick actions</h2>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Jump in wherever you are.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button type="button" className="btn-secondary" onClick={() => scrollToRef(subjectFormRef)}>
+              Add subject
+            </button>
+            <button type="button" className="btn-secondary" onClick={handleGeneratePlan} disabled={status.generatingPlan}>
+              {status.generatingPlan ? "Creating..." : "Create today’s plan"}
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => scrollToRef(pomodoroRef)}>
+              Start focus session
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {showGettingStarted ? (
+        <section className="panel p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-display text-2xl font-semibold">👋 Let’s get you started</h2>
+              <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-600 dark:text-slate-300">
+                <li>Add your subjects</li>
+                <li>Create your study plan</li>
+                <li>Start your session</li>
+              </ol>
+            </div>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => {
+                if (!hasSubjects) {
+                  scrollToRef(subjectFormRef);
+                  return;
+                }
+
+                handleGeneratePlan();
+                scrollToRef(scheduleRef);
+              }}
+            >
+              Start here
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      <PlannerOverview stats={progress} />
+      {status.error ? <p className="mt-5 text-sm text-red-500">{status.error}</p> : null}
+      {status.note ? <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{status.note}</p> : null}
+      {doneForToday ? <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">You’re done for today 🎉</p> : null}
+      <div className="mt-6 grid gap-6 xl:grid-cols-[0.8fr,1.2fr]">
+        <div className="space-y-6">
+          <div ref={(node) => (subjectFormRef.current = node)}>
+            <SubjectForm onSubmit={handleCreateSubject} submitting={status.savingSubject} />
+          </div>
+          <NotificationPanel reminders={reminders} />
+          <div ref={(node) => (pomodoroRef.current = node)}>
+            <PomodoroTimer onSessionComplete={handlePomodoroComplete} />
+          </div>
+        </div>
+        <div className="space-y-6">
+          <section className="panel p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="font-display text-2xl font-semibold">Your subjects</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{subjects.length} subject(s) available for the planner.</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button type="button" onClick={handleGeneratePlan} className="btn-primary" disabled={status.generatingPlan}>
+                  {status.generatingPlan ? "Creating..." : "Create today's plan"}
+                </button>
+                {hasPlan ? (
+                  <button type="button" onClick={handleClearSchedule} className="btn-secondary">
+                    Clear schedule
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {subjects.length > 0 ? (
+                subjects.map((subject) => (
+                  <article key={subject._id} className="rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: subject.color }} />
+                        <p className="font-semibold">{subject.name}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSubject(subject._id, subject.name)}
+                        className="rounded-full p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                        aria-label={`Remove ${subject.name}`}
+                      >
+                        <FiX size={18} />
+                      </button>
+                    </div>
+                    <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                      {subject.priority} priority • {subject.weeklyTargetHours}h weekly • confidence {subject.currentConfidence}/5
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500 dark:text-slate-400">No subjects added yet.</p>
+              )}
+            </div>
+          </section>
+          <div ref={(node) => (scheduleRef.current = node)}>
+            <TaskBoard schedule={schedule} onComplete={handleTaskComplete} onFocus={handleFocus} onReschedule={handleRescheduleOpen} />
+          </div>
+        </div>
+      </div>
+    </DashboardShell>
+    </>
+  );
+}
