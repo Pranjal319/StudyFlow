@@ -63,3 +63,76 @@ html.dark .btn-secondary {
 .btn-secondary:active {
   @apply scale-95;
 }
+
+/* Input Fields */
+.field {
+  @apply w-full rounded-md border border-[#D1D5DB] bg-white px-3.5 py-2.5 text-sm text-[#111827] outline-none transition duration-200 placeholder-[#9CA3AF] focus:border-[#22C55E] focus:ring-1 focus:ring-[#22C55E]/30;
+}
+
+html.dark .field {
+  @apply border-[#374151] bg-[#111827] text-[#E5E7EB] placeholder-[#6B7280];
+}
+
+/* Typography Hierarchy */
+.text-primary {
+  @apply text-[#111827] transition-colors duration-300;
+}
+
+html.dark .text-primary {
+  @apply text-[#E5E7EB];
+}
+
+.text-secondary {
+  @apply text-[#6B7280] transition-colors duration-300;
+}
+
+html.dark .text-secondary {
+  @apply text-[#9CA3AF];
+}
+
+.text-muted {
+  @apply text-[#9CA3AF] transition-colors duration-300;
+}
+
+html.dark .text-muted {
+  @apply text-[#6B7280];
+}
+
+/* Animations */
+.fade-up {
+  animation: fadeUp 0.5s ease forwards;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover lift effect */
+.hover-lift {
+  @apply transition duration-200 hover:scale-105 hover:shadow-card;
+}
+
+/* Task completion animation */
+@keyframes taskComplete {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+}
+
+.task-complete {
+  animation: taskComplete 0.3s ease forwards;
+}
